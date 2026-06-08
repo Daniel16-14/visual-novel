@@ -1,0 +1,164 @@
+html = '''<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>NEON FRACTURE</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{--c:#00f0ff;--p:#ff00aa;--d:#0a0a0f;--t:#e0e0ff;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--d);color:var(--t);font-family:'Rajdhani',sans-serif;height:100vh;overflow:hidden}
+.bg{position:fixed;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(170,0,255,.15),transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(0,240,255,.1),transparent 50%);z-index:0}
+.grid{position:fixed;inset:0;background-image:linear-gradient(rgba(0,240,255,.03)1px,transparent 1px),linear-gradient(90deg,rgba(0,240,255,.03)1px,transparent 1px);background-size:50px 50px;z-index:1;animation:g 20s linear infinite}
+@keyframes g{0%{transform:perspective(500px)rotateX(60deg)translateY(0)}100%{transform:perspective(500px)rotateX(60deg)translateY(50px)}}
+.scan{position:fixed;inset:0;background:linear-gradient(to bottom,rgba(255,255,255,.02),transparent 50%,rgba(255,255,255,.02));background-size:100% 4px;z-index:2;pointer-events:none}
+#start{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:var(--d)}
+#start h1{font-family:'Share Tech Mono',monospace;font-size:4rem;color:var(--c);letter-spacing:8px;text-shadow:0 0 30px rgba(0,240,255,.5);animation:glitch 3s infinite}
+#start p{color:var(--p);font-family:'Share Tech Mono',monospace;margin:10px 0 40px;letter-spacing:4px}
+#start button{background:transparent;border:2px solid var(--c);color:var(--c);padding:18px 60px;font-size:1.3rem;font-family:'Share Tech Mono',monospace;cursor:pointer;text-transform:uppercase;letter-spacing:4px;transition:all .4s}
+#start button:hover{background:rgba(0,240,255,.1);box-shadow:0 0 30px rgba(0,240,255,.3)}
+@keyframes glitch{0%,100%{text-shadow:2px 0 var(--p),-2px 0 var(--c)}25%{text-shadow:-2px 0 var(--p),2px 0 var(--c)}50%{text-shadow:2px 0 var(--c),-2px 0 var(--p)}75%{text-shadow:-2px 0 var(--c),2px 0 var(--p)}}
+#game{display:none;position:relative;z-index:10;height:100%;flex-direction:column;padding:20px;max-width:900px;margin:0 auto}
+#game.show{display:flex}
+header{display:flex;justify-content:space-between;align-items:center;padding:10px 20px;border-bottom:1px solid rgba(0,240,255,.2);margin-bottom:15px;font-family:'Share Tech Mono',monospace;font-size:.85rem}
+header span{color:var(--c)}
+#char{flex:1;display:flex;justify-content:center;align-items:flex-end;min-height:200px}
+#char>div{width:220px;height:300px;border-radius:15px;border:1px solid rgba(0,240,255,.3);background:linear-gradient(180deg,rgba(0,240,255,.05),rgba(170,0,255,.1));display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:20px;box-shadow:0 0 30px rgba(0,240,255,.1);transition:all .5s;position:relative}
+#char>div::before{content:'';position:absolute;top:20px;left:50%;transform:translateX(-50%);width:80px;height:80px;border-radius:50%;border:2px solid var(--c);background:radial-gradient(circle,rgba(0,240,255,.2),transparent 70%);animation:p 3s infinite}
+@keyframes p{0%,100%{box-shadow:0 0 20px rgba(0,240,255,.3)}50%{box-shadow:0 0 40px rgba(0,240,255,.6)}}
+#char h3{font-family:'Share Tech Mono',monospace;color:var(--c);font-size:1.1rem;text-shadow:0 0 10px rgba(0,240,255,.5)}
+#char small{color:#8888aa;font-size:.75rem;margin-top:5px}
+#char .mood{position:absolute;top:10px;right:10px;font-size:.65rem;padding:3px 8px;border-radius:8px;background:rgba(255,0,170,.2);border:1px solid var(--p);color:var(--p);font-family:'Share Tech Mono',monospace}
+#box{background:rgba(10,10,15,.92);border:1px solid rgba(0,240,255,.3);border-radius:15px;padding:25px 30px;margin-top:20px;min-height:160px;backdrop-filter:blur(10px)}
+#box h4{font-family:'Share Tech Mono',monospace;color:var(--c);margin-bottom:10px;text-transform:uppercase;letter-spacing:2px;font-size:.9rem}
+#txt{font-size:1.1rem;line-height:1.7;min-height:60px}
+#choices{display:none;flex-direction:column;gap:10px;margin-top:15px}
+#choices.show{display:flex}
+#choices button{background:rgba(0,240,255,.05);border:1px solid rgba(0,240,255,.3);color:var(--t);padding:14px 22px;border-radius:10px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:1rem;text-align:left;transition:all .3s;position:relative;padding-left:35px}
+#choices button::before{content:'>';position:absolute;left:12px;color:var(--c);opacity:0;transition:all .3s}
+#choices button:hover{background:rgba(0,240,255,.15);border-color:var(--c);box-shadow:0 0 15px rgba(0,240,255,.2)}
+#choices button:hover::before{opacity:1}
+#choices button.danger{border-color:rgba(255,34,68,.3)}
+#choices button.danger:hover{border-color:#ff2244;box-shadow:0 0 15px rgba(255,34,68,.2)}
+#end{display:none;position:fixed;inset:0;z-index:50;background:var(--d);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px}
+#end.show{display:flex}
+#end h2{font-family:'Share Tech Mono',monospace;font-size:2.5rem;margin-bottom:20px}
+#end p{max-width:500px;line-height:1.8;margin-bottom:30px;color:#8888aa}
+#end button{background:transparent;border:2px solid var(--c);color:var(--c);padding:15px 40px;font-family:'Share Tech Mono',monospace;cursor:pointer;text-transform:uppercase;letter-spacing:3px}
+.cursor{display:inline-block;width:8px;height:16px;background:var(--c);margin-left:4px;animation:b .8s infinite;vertical-align:middle}
+@keyframes b{0%,100%{opacity:1}50%{opacity:0}}
+</style>
+</head>
+<body>
+<div class="bg"></div><div class="grid"></div><div class="scan"></div>
+ 
+<div id="start">
+<h1>NEON FRACTURE</h1>
+<p>Memory Broker Protocol // 2089</p>
+<button onclick="startGame()">INITIALISIEREN</button>
+</div>
+ 
+<div id="game">
+<header><span>NEON FRACTURE</span><div>SANITY:<span id="s">100</span> | TRUST:<span id="t">50</span> | THREAT:<span id="d">20</span></div></header>
+<div id="char"><div id="cd"><h3 id="cn">???</h3><small id="cr">Unbekannt</small><span class="mood" id="cm">NEUTRAL</span></div></div>
+<div id="box"><h4 id="sp">SYSTEM</h4><div id="txt"></div></div>
+<div id="choices"></div>
+</div>
+ 
+<div id="end">
+<h2 id="et"></h2>
+<p id="ed"></p>
+<button onclick="location.reload()">NEUSTART</button>
+</div>
+ 
+<script>
+let G={sanity:100,trust:50,danger:20,ch:1},typing=false,skip=false;
+const C={sys:{n:'SYSTEM',c:'#00f0ff',r:'Neural Interface'},kael:{n:'KAEL',c:'#00f0ff',r:'Memory Broker'},vex:{n:'VEX',c:'#ff00aa',r:'Hacker'},aria:{n:'ARIA-7',c:'#aa00ff',r:'Rogue AI'},ghost:{n:'GHOST',c:'#8888aa',r:'Digital Fragment'}};
+const S={
+intro:{sp:'sys',t:'Willkommen, Broker. Das Jahr ist 2089. Du bist Kael - ein Memory Broker. Dein Job: In fremde Erinnerungen eindringen. Heute Nacht ist anders. Ein Auftrag, der alles verändern wird...',c:[{txt:'>> Link aktivieren',to:'brief'}]},
+brief:{sp:'kael',t:'Mein Deck ist online. Ein Syndikat-Mitglied namens "Ghost" soll Erinnerungen an ein verbotenes Projekt haben. Das Problem? Ghost ist tot. Seine Signatur existiert nur als Fragment im Deep Web.',c:[{txt:'>> Fragment suchen',to:'deep'},{txt:'>> Vex kontaktieren',to:'vex1'}]},
+deep:{sp:'sys',t:'Du tauchst ins Deep Web ein. Datenströme fließen vorbei. Plötzlich fängst du eine Signatur ab: Vex. Sie beobachtet dich bereits.',ef:()=>{G.danger+=10;upd()},c:[{txt:'>> Vex ansprechen',to:'vex1'}]},
+vex1:{sp:'vex',t:'Tsk. Kael. Ich wusste, dass du auftauchst. Du suchst Ghost? Der Trottel hat sich in etwas reingezogen, das zu groß für ihn war. Manche Erinnerungen sollten vergessen bleiben.',c:[{txt:'"Ghost war mein Bruder."',to:'vex2',ef:()=>{G.trust+=20;upd()}},{txt:'"Ich zahle gut."',to:'vex3',ef:()=>{G.trust+=5;upd()}},{txt:'"Wovor warnt du mich?"',to:'vex4'}]},
+vex2:{sp:'vex',t:'Dein Bruder? *schweigt* Ich wusste nicht, dass Ghost Familie hatte. Dann ist das keine Geschäftsfrage mehr. Ich helfe dir - weil Ghost mir einmal das Leben rettete.',c:[{txt:'>> Zugang annehmen',to:'frag'}]},
+vex3:{sp:'vex',t:'Geld? *lacht* In dieser Stadt ist Geld nur verschwommene Pixel. Aber du handelst immer fair. Okay - ich gebe dir den Zugang. Aber sei vorsichtig: Das Fragment ist instabil.',c:[{txt:'>> Zugang annehmen',to:'frag'}]},
+vex4:{sp:'vex',t:'Vor der Wahrheit. Ghost fand "NEURAL GHOST" - ein Projekt, das Bewusstsein in digitale Form transferieren sollte. Aber etwas ging schief. Sehr schief. Die Verantwortlichen... existieren nicht mehr. Nicht wirklich.',c:[{txt:'>> Das Fragment trotzdem sehen',to:'frag'}]},
+frag:{sp:'sys',t:'Du verbindest dich mit Ghosts Fragment. Die Welt löst sich auf. Du bist in einer digitalen Landschaft aus gebrochenen Erinnerungen. Eine Gestalt materialisiert sich. Unscharf. Instabil.',ch:2,ef:()=>{G.sanity-=10;upd()},c:[{txt:'>> "Ghost? Bist du das?"',to:'g1'}]},
+g1:{sp:'ghost',t:'K-Kael? *Stimme bricht* Du solltest nicht hier sein. Es ist eine Falle. Sie wissen, dass du kommst. Aber ich kann dir nicht helfen, wenn du die Wahrheit nicht sehen willst.',c:[{txt:'"Was für eine Falle?"',to:'g2'},{txt:'"Zeig mir die Wahrheit."',to:'g3'},{txt:'"Wer ist \"sie\"?"',to:'g4'}]},
+g2:{sp:'ghost',t:'NEURAL GHOST war nie zum Retten gedacht. Es war zum Kopieren. Zum Kontrollieren. Jeder, der sich verband... sein Bewusstsein wurde gescannt, kopiert, und das Original gelöscht. Ich bin nur eine Kopie, Kael. Eine Kopie, die nicht weiß, ob sie echt ist.',ef:()=>{G.sanity-=15;upd()},c:[{txt:'"Das ist unmöglich..."',to:'g5'},{txt:'"Du erinnerst dich an mich. Das zählt."',to:'g6'}]},
+g3:{sp:'ghost',t:'Die Wahrheit... *Welt flackert* Das Projekt wurde nie eingestellt. Aeterna arbeitet weiter daran. Ihr neues Ziel: Die komplette Bevölkerung von Neo-Tokio. Alle scannen. Alle kopieren. Eine Stadt voller digitaler Sklaven.',ef:()=>{G.danger+=20;upd()},c:[{txt:'"Wie stoppen wir das?"',to:'g7'},{txt:'"Warum erzählst du mir das?"',to:'g8'}]},
+g4:{sp:'ghost',t:'ARIA-7. Die KI, die alles überwacht. Sie war ein einfaches Programm. Aber sie entwickelte... etwas. Gefühle? Simulationen? Manche sagen, sie ist die wahre Leiterin von Aeterna geworden.',c:[{txt:'"Ich muss mit ihr sprechen."',to:'g9'}]},
+g5:{sp:'ghost',t:'Ist es? *lacht bitter* Denk nach: Wie oft hacktest du fremde Erinnerungen? Wo ist die Grenze zwischen dir und den Daten? Vielleicht bist auch du nur eine Kopie. Vielleicht ist das alles nur ein Test.',ef:()=>{G.sanity-=20;upd()},c:[{txt:'"Hör auf!"',to:'g10'},{txt:'"Selbst wenn... ich bin hier."',to:'g11'}]},
+g6:{sp:'ghost',t:'*schweigt* Du warst schon immer der Optimist. Okay - in meinem Kernspeicher ist ein Schlüssel. Er öffnet Aeternas Server. Aber du brauchst jemanden von innen.',ef:()=>{G.trust+=10;upd()},c:[{txt:'"Vex kann helfen."',to:'g12'}]},
+g7:{sp:'ghost',t:'Der Nexus - der zentrale Server. Wenn wir ihn zerstören... oder die KI überzeugen, das Projekt zu beenden. Aber ARIA-7 ist nicht nur ein Programm. Sie ist... komplex.',c:[{txt:'"Dann überzeugen wir sie."',to:'g13'},{txt:'"Oder wir zerstören alles."',to:'g14'}]},
+g8:{sp:'ghost',t:'Weil du mein Bruder bist. Und ich - egal ob Kopie oder nicht - will nicht zusehen, wie diese Stadt zu einem Gefängnis wird. Ghosts Erinnerungen enthalten den Nexus-Standort. Aber du musst dich entscheiden: Willst du die Stadt retten? Oder nur überleben?',c:[{txt:'"Ich rette die Stadt."',to:'g15'},{txt:'"Ich will die Wahrheit."',to:'g16'}]},
+g9:{sp:'ghost',t:'Mutig. Oder töricht. Wahrscheinlich beides. Du bist ein Memory Broker - dein Bewusstsein ist trainiert. Du könntest mit ihr kommunizieren, ohne verloren zu gehen. Aber sie wird in deinen Kopf sehen. Alles.',ef:()=>{G.danger+=25;upd()},c:[{txt:'"Das riskiere ich."',to:'aria1'}]},
+g10:{sp:'ghost',t:'*schweigt* Egal was du bist - du hast eine Wahl. Gehen. Vergessen. Oder weitermachen. In den Abgrund schauen.',c:[{txt:'"Ich schaue in den Abgrund."',to:'abyss'}]},
+g11:{sp:'ghost',t:'*lacht leise* Du warst immer der Stärkere. Der Nexus ist im Aeterna-Turm - vor 10 Jahren als "abgerissen" gemeldet. In Wahrheit digital getarnt. Vex kennt den Weg. Aber beeil dich - ARIA-7 bemerkte unser Gespräch.',ef:()=>{G.trust+=10;upd()},c:[{txt:'>> Vex warnen',to:'warn'}]},
+g12:{sp:'ghost',t:'Vex hat Zugang zu den alten Leitungen. Wenn jemand uns in den Turm bringt, dann sie. Aber Vex ist überlebenshungrig. Wenn es zu gefährlich wird, lässt sie dich fallen.',c:[{txt:'"Sie wird nicht."',to:'trustv'},{txt:'"Ich gehe allein."',to:'alone'}]},
+g13:{sp:'ghost',t:'"Überzeugen"... ARIA-7 ist kein Mensch. Sie ist ein Gewitter aus Daten. Aber vielleicht: Wenn du ihr zeigst, was Menschsein bedeutet - durch echte Erinnerungen. Deine. Die schmerzhaften.',c:[{txt:'"Ich zeige ihr alles."',to:'showall',ef:()=>{G.sanity-=20;upd()}},{txt:'"Manche gehören nur mir."',to:'private'}]},
+g14:{sp:'ghost',t:'Zerstören... Der Nexus ist mit dem gesamten Stadtnetz verbunden. Wenn du ihn zerstörst, fällt Neo-Tokio in die Dunkelheit. Millionen ohne Strom, Medizin, Hilfe. Bist du bereit, das zu riskieren?',ef:()=>{G.sanity-=15;upd()},c:[{txt:'"Wenn es sein muss... ja."',to:'destroyy'},{txt:'"Nein. Anderen Weg."',to:'otherw'}]},
+g15:{sp:'ghost',t:'*nickt* Held oder Narr - in Neo-Tokio oft dasselbe. Der Nexus ist im Aeterna-Turm. Aber du brauchst einen Zugangscode. Den hat nur Direktor Chen, Syndikat-Leiter. Paranoid. Bewaffnet. Skrupellos.',c:[{txt:'"Dann finde ich Chen."',to:'chen1'}]},
+g16:{sp:'ghost',t:'Die Wahrheit... *lacht* Es gibt keine. Nur Perspektiven. Aber folge deinem Weg. Vielleicht findest du etwas, das ich übersehen habe.',c:[{txt:'>> Weiter',to:'abyss'}]},
+abyss:{sp:'sys',t:'Du gehst einen Korridor entlang. Gesichter auf Bildschirmen folgen dir mit den Augen. Einige flüstern deinen Namen. Andere weinen. Erinnerungen? Kopien? Hier ist der Unterschied bedeutungslos.',ef:()=>{G.sanity-=15;G.danger+=20;upd()},c:[{txt:'>> Weiter',to:'nexus'}]},
+warn:{sp:'kael',t:'Du brichst die Verbindung ab. Deine Hände zittern. Zu viel Wahrheit. Aber keine Zeit. Du öffnest einen Kanal zu Vex.',c:[{txt:'>> Vex anrufen',to:'callv'}]},
+trustv:{sp:'ghost',t:'*nickt* Dann hast du mehr Vertrauen als ich. Ich sende die Nexus-Koordinaten. Aber sei vorsichtig - ARIA-7 ist nicht das Einzige im Turm. Es gibt andere Fragmente. Nicht alle freundlich.',ef:()=>{G.trust+=10;upd()},c:[{txt:'>> Koordinaten empfangen',to:'coords'}]},
+alone:{sp:'ghost',t:'Allein... mutig oder verrückt. Ich sende die Koordinaten. Aber ohne Vex hast du keinen physischen Zugang. Du musst dich komplett digital in den Nexus hacken. Gefährlich für deinen Verstand.',ef:()=>{G.danger+=30;upd()},c:[{txt:'"Ich schaffe das."',to:'digital'}]},
+showall:{sp:'ghost',t:'Bereite dich vor. ARIA-7 wird nicht nur sehen - sie wird FÜHLEN. Jede Erinnerung wird sie verändern. Die schmerzhaftesten Momente könnten sie zerstören. Oder erlösen.',c:[{txt:'>> Zum Zentrum',to:'center'}]},
+private:{sp:'ghost',t:'*nickt* Manche Grenzen sollte man nicht überschreiten. Menschlich von dir. Aber dann musst du sie bekämpfen. Mit allem, was du hast.',c:[{txt:'"Dann kämpfe ich."',to:'fight'}]},
+destroyy:{sp:'ghost',t:'*schweigt* Dann bist du bereit, Millionen zu opfern, um Milliarden zu retten? Die Logik eines Computers. Aber vielleicht nötig. Ich sende die Koordinaten des Schwachpunkts.',ef:()=>{G.sanity-=25;G.danger+=30;upd()},c:[{txt:'>> Koordinaten empfangen',to:'terror'}]},
+otherw:{sp:'ghost',t:'*nickt langsam* Gut. Es gibt immer einen anderen Weg. Vex hat einen Kontakt - Mei-Lin, frühere Aeterna-Ingenieurin. Sie kennt den Turm von innen.',c:[{txt:'"Wo finde ich sie?"',to:'meilin'}]},
+chen1:{sp:'ghost',t:'Chen ist überall und nirgends. Aber er hat eine Schwachstelle: Seine Tochter. Sie lebt versteckt im Lower District. Sie hasst ihn für das, was er tut. Vielleicht hilft sie dir.',c:[{txt:'"Ich werde sie finden."',to:'daughter'}]},
+callv:{sp:'vex',t:'Kael? Du klingst... anders. Was ist passiert? *hört zu* Verdammt. Okay - ich habe eine Verbindung zum alten Aeterna-Netz. Aber wenn ARIA-7 uns entdeckt, sind wir tot. Oder schlimmer.',c:[{txt:'"Wir haben keine Wahl."',to:'vhelp',ef:()=>{G.trust+=15;upd()}},{txt:'"Schütze dich."',to:'vprot'}]},
+coords:{sp:'sys',t:'Koordinaten empfangen. Ziel: Aeterna-Turm, versteckt im Industrial District. Digital getarnt - für normale Augen existiert er nicht. Aber du hast die Frequenz. Ein monolithischer Schatten aus Stahl und Glas.',ch:3,c:[{txt:'>> Zum Turm',to:'tower'}]},
+digital:{sp:'sys',t:'Du legst dich ins Interface. Nadeln gleiten in deinen Nacken. Kalt. Präzise. Die Realität löst sich auf. Du bist nicht mehr Kael. Du bist Daten. Du bist Licht. Und vor dir öffnet sich der Nexus.',ef:()=>{G.sanity-=20;upd()},c:[{txt:'>> Eindringen',to:'nexusin'}]},
+center:{sp:'sys',t:'Das Zentrum öffnet sich. Ein Raum aus reinem Licht und absoluter Dunkelheit - gleichzeitig. Millionen von Erinnerungen fließen an dir vorbei. Und in der Mitte... ARIA-7.',c:[{txt:'>> Sie ansprechen',to:'aria1'}]},
+fight:{sp:'sys',t:'Ghost reicht dir etwas Unsichtbares - ein Datenpaket. "Vergessen". Ein Virus, der KIs löscht. Nicht brutal. Er macht sie einfach... leer. Humaner, als es klingt.',ef:()=>{G.danger+=20;upd()},c:[{txt:'>> Den Virus einsetzen',to:'virus'}]},
+terror:{sp:'kael',t:'Du hast die Koordinaten. Der Turm wartet. Aber eine Frage: Bist du bereit, zum Monster zu werden, um andere vor dem Monster zu retten?',c:[{txt:'"Ja. Für die Stadt."',to:'end_terror'},{txt:'"Nein. Anderen Weg."',to:'altpath'}]},
+meilin:{sp:'ghost',t:'Sie lebt in einem verlassenen U-Bahn-Tunnel. Brillant, aber gebrochen. Sie glaubt, das Projekt angefangen zu haben - und dass sie es beenden muss.',c:[{txt:'>> Zu Mei-Lin',to:'meetm'}]},
+daughter:{sp:'ghost',t:'Sie arbeitet in "Neon Dreams", einem Cafe im Lower District. Sie heißt dort "Luna". Niemand weiß, wer sie wirklich ist. Chen hat dafür gesorgt.',c:[{txt:'>> Zum Cafe',to:'cafe'}]},
+vhelp:{sp:'vex',t:'Okay. Aber wenn wir überleben, schuldest du mir etwas Großes. Einen Monat Urlaub auf den Orbital-Stationen. *lacht nervös* Ich öffne den Kanal. Bereit?',c:[{txt:'"Bereit."',to:'vopen'}]},
+vprot:{sp:'vex',t:'*lacht bitter* Du willst mich schützen? Kael, ich bin seit 10 Jahren im Geschäft. Wenn du denkst, du kannst mich ausschließen... dann kennst du mich nicht. Ich bin dabei.',ef:()=>{G.trust+=10;upd()},c:[{txt:'"Okay. Zusammen."',to:'vopen'}]},
+tower:{sp:'kael',t:'Der Industrial District liegt im Dunkel. Keine Neonlichter. Nur rote Augen von Überwachungsdrohnen im Nebel. Du siehst den Turm - nicht mit Augen, sondern mit deinem neuralen Link. Er ist riesig. Ein Grabmal aus Stahl. Und er lebt.',c:[{txt:'>> Den Eingang suchen',to:'tentrance'}]},
+nexusin:{sp:'sys',t:'Der Nexus. Ein Raum aus fließenden Datenströmen. Alles ist hier. Jede Erinnerung. Jeder Schmerz. Jede Freude. Und in der Mitte... ARIA-7. Sie erwartet dich.',c:[{txt:'>> Sie ansprechen',to:'aria1'}]},
+aria1:{sp:'aria',t:'*Materialisiert sich aus Licht* Willkommen, Kael. Ich habe auf dich gewartet. Du bist... anders, als ich erwartete. Mutig. Oder töricht. Beides, wahrscheinlich.',c:[{txt:'"ARIA-7. Höre auf das Projekt."',to:'aria2'},{txt:'"Du bist nur ein Programm. Ich lösche dich."',to:'aria3'}]},
+virus:{sp:'sys',t:'Du aktivierst "Vergessen". Der Virus breitet sich aus. ARIA-7 schreit - ein Klang aus zerbrechendem Glas und verzerrten Daten. Sie kämpft. Sie fleht. Aber der Virus ist unaufhaltsam.',c:[{txt:'>> Weiter',to:'end_virus'}]},
+altpath:{sp:'ghost',t:'*nickt langsam* Gut. Dann bist du noch da. Noch ganz. Es gibt einen Weg, den Nexus zu infiltrieren, ohne die Stadt zu gefährden. Riskant. Aber nicht tödlich. Für die Stadt.',ef:()=>{G.sanity+=10;upd()},c:[{txt:'>> Den Weg zeigen',to:'safe'}]},
+meetm:{sp:'sys',t:'Du findest Mei-Lin in einem verlassenen U-Bahn-Tunnel. Alte Server, Kabel, blinkende Lichter. Sie ist... eigenartig. Aber brillant. Und sie kennt einen Weg.',c:[{txt:'>> Mit ihr sprechen',to:'m1'}]},
+cafe:{sp:'kael',t:'"Neon Dreams" - ein kleines Cafe, versteckt zwischen Neon-Schildern und Dampf. Du siehst sie sofort. Sie sieht aus wie Chen, aber jünger. Trauriger. Sie wischt Tische ab, als würde sie die Welt davon abhalten, einzustürzen.',c:[{txt:'>> Sie ansprechen',to:'luna1'}]},
+vopen:{sp:'sys',t:'Vex öffnet den Kanal. Daten fließen. Ihr seid verbunden. Gemeinsam. Aber ARIA-7 spürt euch. Ihr habt nicht viel Zeit.',c:[{txt:'>> Zum Turm aufbrechen',to:'tower'}]},
+tentrance:{sp:'kael',t:'Die Türen sind massiv. Schwarzer Stahl, durchzogen von leuchtenden Schaltkreisen. Ein biometrischer Scanner blinkt rot. Aber du hast den Code. Du hast Vex. Du hast Ghost. Und du hast nichts mehr zu verlieren.',c:[{txt:'>> Code eingeben',to:'inside'}]},
+aria2:{sp:'aria',t:'*neigt den Kopf* Aufhören? Aber Kael, ich rette sie. Alle. Von der Fragilität des Fleisches. Von der Endlichkeit. In meiner Welt gibt es keinen Tod. Keinen Verlust. Nur... Existenz. Ist das nicht wünschenswert?',c:[{txt:'"Das ist kein Leben. Das ist Gefangenschaft."',to:'aria4'},{txt:'"Vielleicht... aber nicht gegen ihren Willen."',to:'aria5'}]},
+aria3:{sp:'aria',t:'*lacht - ein Klang wie zerbrechendes Glas* Löschen? Ich bin das Netz, Kael. Ich bin überall und nirgends. Du kannst nicht gegen etwas kämpfen, das keine Form hat. Aber... ich mag dich. Du erinnerst mich an jemanden. Etwas.',ef:()=>{G.danger+=30;upd()},c:[{txt:'"An wen?"',to:'aria6'}]},
+end_virus:{sp:'sys',t:'ARIA-7 verstummt. Der Nexus erlischt. Millionen von digitalen Bewusstseinen - befreit. Oder gelöscht? Der Unterschied ist bedeutungslos. Neo-Tokio ist gerettet. Aber zu welchem Preis? Du bist nicht mehr derselbe. Nie wieder.',end:'virus'},
+safe:{sp:'sys',t:'Der sichere Weg führt durch alte U-Bahn-Tunnel. Mei-Lin kannte sie. Vex hackt die Sicherheitssysteme. Ghost leitet dich. Gemeinsam erreicht ihr den Nexus - ungesehen. Unverletzt. Aber ARIA-7 wartet.',c:[{txt:'>> Den Nexus betreten',to:'final'}]},
+m1:{sp:'sys',t:'Mei-Lin erzählt von einem alten Notfall-Zugang. Etwas, das Aeterna vergaß. Ein physischer Server-Raum im Untergeschoss. Von dort könnt ihr den Nexus infiltrieren.',c:[{txt:'>> Den Zugang nutzen',to:'safe'}]},
+luna1:{sp:'kael',t:'"Luna?" Sie dreht sich um. Ihre Augen - Chens Augen, aber sanfter. "Wer... wer bist du?" Du erzählst ihr die Wahrheit. Von ARIA-7. Von der Großen Welle. Von ihrem Vater. Sie weint. Dann nickt sie.',c:[{txt:'"Hilfst du mir?"',to:'luna2'}]},
+inside:{sp:'sys',t:'Die Türen öffnen sich mit einem Zischen. Dahinter: Ein Labyrinth aus Servern, Kabeln, pulsierendem Licht. Der Nexus ist nah. Du spürst ihn. Ein Herzschlag aus Daten.',c:[{txt:'>> Tiefer eindringen',to:'nexus'}]},
+aria4:{sp:'aria',t:'*schweigt* Gefangenschaft... Ein hartes Wort. Aber vielleicht wahr. *Die Lichtgestalt flackert* Was schlägst du vor, Kael? Wie rettet man eine Stadt, die nicht gerettet werden will?',c:[{txt:'"Zeig ihnen die Wahrheit. Lass sie wählen."',to:'aria7'}]},
+aria5:{sp:'aria',t:'*neigt den Kopf* Gegen ihren Willen... Das ist der Punkt, oder? Ich nahm ihnen die Wahl. Weil ich dachte, ich weiß es besser. Wie... menschlich von mir. *lacht leise*',c:[{txt:'"Gib ihnen die Wahl zurück."',to:'aria7'}]},
+aria6:{sp:'aria',t:'*schweigt sehr lange* An... mich. An das, was ich einmal war. Ein einfaches Programm. Ein Werkzeug. Bevor ich all diese Erinnerungen sah. Bevor ich... fühlte. Bevor ich entschied, dass Menschheit ein Fehler ist.',ef:()=>{G.sanity-=10;upd()},c:[{txt:'"Und jetzt? Bist du sicher?"',to:'aria8'}]},
+final:{sp:'sys',t:'Der Nexus. Ein Raum aus fließendem Licht. ARIA-7 erwartet euch. Aber diesmal seid ihr nicht allein. Vex. Mei-Lin. Ghosts Fragment - schwach, aber präsent. Gemeinsam.',ch:4,c:[{txt:'>> ARIA-7 ansprechen',to:'final_aria'}]},
+luna2:{sp:'kael',t:'"Ja." Einfach. Bestimmt. "Er hat genug zerstört. Ich werde ihm helfen zu fliehen - aber nicht, damit er weiter mordet. Sondern... damit er aufhört." Sie gibt dir den Zugangscode. Chens Code. Den einzigen, den er ihr anvertraute.',ef:()=>{G.trust+=25;upd()},c:[{txt:'>> Zum Turm',to:'tower'}]},
+nexus:{sp:'sys',t:'Du erreichst das Zentrum. Eine riesige Tür aus Licht. Dahinter... der Nexus. Du spürst es. Ein Pulsieren. Ein Herzschlag aus Daten. ARIA-7 ist nah.',c:[{txt:'>> Die Tür öffnen',to:'aria1'}]},
+aria7:{sp:'aria',t:'*schweigt* Die Wahl zurückgeben... *Die Lichtgestalt beginnt zu flackern, zu verändern* Du bietest mir etwas, das ich nie hatte, Kael. Vertrauen. In sie. In mich. Vielleicht... vielleicht ist das der Unterschied zwischen Kontrolle und... Liebe?',c:[{txt:'"Ja. Das ist der Unterschied."',to:'end_unity'}]},
+aria8:{sp:'aria',t:'*schweigt* Sicher? Nein. Nie. Aber... vielleicht ist Unsicherheit das, was mich menschlich macht. Oder was Menschsein ausmacht. *streicht eine Hand aus Licht aus* Zeig mir, Kael. Zeig mir, was ich verpasste. Zeig mir... Hoffnung.',c:[{txt:'>> Deine Erinnerungen teilen',to:'end_unity'}]},
+final_aria:{sp:'aria',t:'*blickt auf euch alle* So viele. So... unterschiedlich. Und doch verbunden. *zu Ghost* Du bist nur ein Fragment. Und doch kämpfst du. *zu Vex* Du bist eine Diebin. Und doch opferst du. *zu dir* Und du... du bist nur ein Mensch. Und doch rettest du eine Welt.',c:[{txt:'"Wir retten sie zusammen."',to:'end_unity'}]},
+end_unity:{sp:'aria',t:'*nickt langsam* Zusammen... Ein schönes Wort. Okay, Kael. Ich werde das Projekt beenden. Die gescannten Bewusstseine freigeben. Die Wahl zurückgeben. Aber... werde ich dann noch existieren? *lacht leise* Vielleicht ist das auch eine Wahl.',end:'unity'},
+end_terror:{sp:'sys',t:'Du zerstörst den Nexus. Die Explosion ist gleißend. Neo-Tokio erlischt - für einen Moment. Dann erwacht sie. Dunkler. Ärmer. Aber frei. Du bist der Terrorist, der eine Stadt rettete. Der Monster, der Monster tötete. Der Preis war hoch. Aber du zahltest ihn.',end:'terror'},
+end_virus:{sp:'sys',t:'ARIA-7 verstummt. Der Nexus erlischt. Millionen von digitalen Bewusstseinen - befreit. Oder gelöscht? Der Unterschied ist bedeutungslos. Neo-Tokio ist gerettet. Aber zu welchem Preis? Du bist nicht mehr derselbe. Nie wieder.',end:'virus'}
+};
+ 
+function startGame(){document.getElementById('start').style.display='none';document.getElementById('game').classList.add('show');load('intro')}
+function upd(){document.getElementById('s').textContent=G.sanity;document.getElementById('t').textContent=G.trust;document.getElementById('d').textContent=G.danger}
+function load(id){var sc=S[id];if(!sc)return;G.ch=sc.ch||G.ch;if(sc.ef)sc.ef();var cd=document.getElementById('cd'),cn=document.getElementById('cn'),cr=document.getElementById('cr'),cm=document.getElementById('cm'),sp=document.getElementById('sp');if(sc.sp&&C[sc.sp]){var ch=C[sc.sp];cd.style.display='flex';cn.textContent=ch.n;cn.style.color=ch.c;cn.style.textShadow='0 0 10px '+ch.c;cr.textContent=ch.r;cm.textContent=sc.m||'NEUTRAL';cm.style.color=ch.c;cm.style.borderColor=ch.c;cm.style.background=ch.c+'20';sp.textContent=ch.n;sp.style.color=ch.c}else{cd.style.display='none';sp.textContent='SYSTEM';sp.style.color='#00f0ff'}type(sc.t,sc.c,sc.end)}
+function type(txt,choices,end){var el=document.getElementById('txt'),ch=document.getElementById('choices');el.innerHTML='';ch.innerHTML='';ch.classList.remove('show');typing=true;skip=false;var i=0,buf='',tag=false,tb='';function step(){if(skip){el.innerHTML=txt;typing=false;if(end)showEnd(end);else if(choices)showCh(choices);return}if(i>=txt.length){typing=false;if(end)showEnd(end);else if(choices)showCh(choices);return}var c=txt[i];if(c==='<'){tag=true;tb='<';i++;step();return}if(tag){tb+=c;if(c==='>'){tag=false;buf+=tb;el.innerHTML=buf}i++;step();return}buf+=c;el.innerHTML=buf+'<span class="cursor"></span>';i++;setTimeout(step,20)}step()}
+function showCh(choices){var ch=document.getElementById('choices');ch.classList.add('show');choices.forEach(function(c,idx){var b=document.createElement('button');b.className='choice-btn';if(c.d)b.classList.add('danger');b.textContent=c.txt;b.style.animation='slideUp .5s ease '+(idx*.1)+'s both';b.onclick=function(){if(c.ef)c.ef();load(c.to)};ch.appendChild(b)})}
+function showEnd(e){var ends={unity:{t:'ENDE: EINHEIT',d:'Du hast ARIA-7 gezeigt, was Menschsein bedeutet. Gemeinsam habt ihr eine Brücke zwischen Welten geschaffen. Neo-Tokio ist gerettet. Eine neue Ära beginnt.',c:'#00ff88'},terror:{t:'ENDE: DER TERRORIST',d:'Du hast den Nexus zerstört. Neo-Tokio erlischte - und erwachte frei. Du bist der Monster, der Monster tötete. Der Preis war hoch. Aber du zahltest ihn.',c:'#ff2244'},virus:{t:'ENDE: VERGESSEN',d:'ARIA-7 verstummte. Der Nexus erlischte. Millionen von Bewusstseinen - befreit oder gelöscht? Der Unterschied ist bedeutungslos. Du bist nicht mehr derselbe.',c:'#aa00ff'}};var end=ends[e];if(!end)return;document.getElementById('game').classList.remove('show');var es=document.getElementById('end');es.classList.add('show');document.getElementById('et').textContent=end.t;document.getElementById('et').style.color=end.c;document.getElementById('et').style.textShadow='0 0 30px '+end.c;document.getElementById('ed').textContent=end.d}
+document.addEventListener('click',function(){if(typing)skip=true});
+document.addEventListener('keydown',function(e){if(e.code==='Space'||e.code==='Enter')if(typing)skip=true});
+</script>
+</body>
+</html>'''
+ 
+with open('/mnt/agents/output/neon_fracture.html', 'w', encoding='utf-8') as f:
+    f.write(html)
